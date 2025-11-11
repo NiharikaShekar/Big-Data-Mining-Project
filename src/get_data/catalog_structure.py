@@ -10,7 +10,7 @@ def summarize_folder(path):
         if file.endswith(".csv"):
 
             #skip them empty lines
-            if os.path.getsize(file_path) == 0;
+            if os.path.getsize(file_path) == 0:
                 print (f" {file}: empty file, skipped")
                 continue 
             try:
