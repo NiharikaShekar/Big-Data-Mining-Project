@@ -4,7 +4,7 @@ from typing import List, Optional
 import re
 
 """
-Utilities for Phase 3-lite.
+Utilities for Phase 3.
 
 Why:
 - FakeNewsNet CSVs store tweet IDs as messy strings (tabs/commas/pipes/spaces).
@@ -45,3 +45,4 @@ if __name__ == "__main__":
     samples = ["111\t222 333", "444,555|666", "", None, "nan", "[]", "x-777 y"]
     for s in samples:
         print(s, "→", parse_tweet_ids(s))
+
