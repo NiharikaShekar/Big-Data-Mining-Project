@@ -1,3 +1,4 @@
+# File: src/phase3/similarity_graph.py
 from __future__ import annotations
 from pathlib import Path
 from typing import Literal, Tuple
@@ -6,6 +7,7 @@ import pandas as pd
 import networkx as nx
 import scipy.sparse as sp
 from sklearn.neighbors import NearestNeighbors
+from .utils import ensure_parent  # <-- ADD THIS IMPORT
 
 def _load_vectors(proc_dir: Path, mode: Literal["tfidf","bert"]) -> Tuple[pd.DataFrame, object]:
     news = pd.read_csv(proc_dir / "news_clean.csv", low_memory=False)
@@ -21,10 +23,6 @@ def _load_vectors(proc_dir: Path, mode: Literal["tfidf","bert"]) -> Tuple[pd.Dat
 def build_similarity_graph(proc_dir: Path, out_graphml: Path,
                            mode: Literal["tfidf","bert"]="tfidf",
                            k: int = 10, threshold: float = 0.25) -> nx.Graph:
-    """
-    Build article↔article similarity graph via cosine nearest neighbors.
-    Why: supports community analysis without user interactions.
-    """
     news, X = _load_vectors(proc_dir, mode)
     n = len(news)
     if n == 0:
