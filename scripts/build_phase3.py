@@ -10,6 +10,8 @@ from sklearn.decomposition import PCA
 from src.phase3.article_metrics import build_article_metrics
 from src.phase3.bipartite_graph import build_article_tweet_bipartite
 from src.phase3.similarity_graph import build_similarity_graph
+from src.phase3.user_interaction_graph import build_user_interaction_graph
+from src.phase3.cascade_subgraphs import build_all_cascades
 from src.phase3.utils import ensure_parent
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -72,7 +74,37 @@ def main() -> None:
     G_sim = build_similarity_graph(PROC, simpath, mode=args.mode, k=args.k, threshold=args.thr)
     print(f"[OK] similarity → {simpath} |V|={G_sim.number_of_nodes()} |E|={G_sim.number_of_edges()}")
 
-    # 4) figures
+    # 4) user interaction graph (from JSON dataset or synthetic data)
+    fakenewsnet_full = ROOT / "data" / "raw" / "FakeNewsNet_full"
+    synthetic_dir = PROC / "synthetic"
+    user_graph_path = GRAPHS / "user_interaction.graphml"
+    user_G = build_user_interaction_graph(
+        fakenewsnet_full, 
+        user_graph_path,
+        synthetic_dir=synthetic_dir
+    )
+    if user_G.number_of_nodes() > 0:
+        print(f"[OK] user interaction graph → {user_graph_path}")
+    else:
+        print(f"[INFO] user interaction graph → {user_graph_path} (empty)")
+    
+    # 5) cascade subgraphs (with synthetic user data if available)
+    # NOTE: Building all cascades takes hours. For testing, use max_articles=1000
+    # For full run, set max_articles=None (but expect 2-4 hours)
+    cascades_dir = PROC / "cascades"
+    synthetic_dir = PROC / "synthetic"
+    
+    # Limit to 1000 articles for faster completion (remove this limit for full dataset)
+    MAX_CASCADE_ARTICLES = 1000  # Set to None for all articles
+    
+    cascade_metrics = build_all_cascades(
+        metrics_fp, RAW, cascades_dir, 
+        max_articles=MAX_CASCADE_ARTICLES,
+        synthetic_user_data=synthetic_dir if (synthetic_dir / "synthetic_user_tweet_mapping.csv").exists() else None
+    )
+    print(f"[OK] cascades → {cascades_dir} ({len(cascade_metrics)} articles)")
+    
+    # 6) figures
     _plot_hist_by_label(metrics)
     _plot_topk(metrics)
     _plot_pca()
