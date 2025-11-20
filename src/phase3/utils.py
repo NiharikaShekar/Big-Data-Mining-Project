@@ -41,8 +41,9 @@ def ensure_parent(path: Path) -> None:
 
 
 if __name__ == "__main__":
-    # Quick self-check you can run from VS Code terminal:
+    # check if runnable from VS Code terminal:
     samples = ["111\t222 333", "444,555|666", "", None, "nan", "[]", "x-777 y"]
     for s in samples:
         print(s, "→", parse_tweet_ids(s))
+
 
