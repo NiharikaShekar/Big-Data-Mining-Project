@@ -12,3 +12,6 @@ plotly>=5.24
 python-dotenv>=1.0
 tqdm>=4.66
 jupyter>=1.1
+python-louvain>=0.16
+streamlit>=1.28
+scipy>=1.11
