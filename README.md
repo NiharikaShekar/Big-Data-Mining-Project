@@ -190,7 +190,8 @@ We've created an interactive web application for real-time misinformation detect
 - **Similar Articles:** Shows matching articles with labels and similarity scores
 
 **Demo Screenshot:**
-*image.png*
+
+![Demo Screenshot](images/demo_screenshot.png)
 
 **Test Examples:**
 - Try exact matches from dataset: `Did Miley Cyrus and Liam Hemsworth secretly get married?` (should predict Fake)
@@ -330,7 +331,8 @@ python -m streamlit run scripts/demo_app.py
 The app will open at `http://localhost:8501`
 
 **Demo Screenshot:**
-*image.png*
+
+![Demo Screenshot](images/demo_screenshot.png)
 
 **Test Examples:**
 - Try exact matches from dataset: `Did Miley Cyrus and Liam Hemsworth secretly get married?` (should predict Fake)
