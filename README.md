@@ -49,7 +49,8 @@ The `requirements.txt` file seeds the environment with the following capabilitie
 - Graph analysis: `networkx`, `python-igraph`, `graphviz`
 - Machine learning & embeddings: `scikit-learn`, `sentence-transformers`
 - Visualization: `matplotlib`, `seaborn`, `plotly`
-- Experiment support: `tqdm`, `python-dotenv`, `jupyter`
+- Web framework: `streamlit` (for interactive demo)
+- Experiment support: `tqdm`, `python-dotenv`, `jupyter`, `scipy`
 
 ## Completed Work
 
@@ -62,21 +63,16 @@ We have successfully acquired and processed the FakeNewsNet dataset from Arizona
 - **Data Cleaning:** Implemented comprehensive text cleaning pipeline removing URLs, HTML tags, special characters, and stopwords
 - **Output:** Cleaned dataset saved as `data/processed/news_clean.csv`
 
-### Exploratory Data Analysis
+### Phase 2: Exploratory Data Analysis & Text Embeddings
 
+**Exploratory Data Analysis:**
 We conducted comprehensive EDA revealing key insights:
 - **Tweet Count Statistics:** Mean of 89.2 tweets per article, with significant variance (std: 489.3)
 - **Fake vs Real Comparison:** Fake news shows higher average engagement (132.8 vs 74.8 tweets per article)
 - **Statistical Test:** Mann-Whitney U test confirms significant difference (p < 0.05)
 - **Text Analysis:** Average text length is 68 characters, with 20.3% reduction after cleaning
 
-Run EDA analysis:
-```bash
-source .venv/bin/activate
-PYTHONPATH=. python scripts/run_eda.py
-```
-
-### Text Embeddings and Feature Generation
+**Text Embeddings and Feature Generation:**
 
 We generated numerical representations of articles for similarity analysis:
 
@@ -91,7 +87,7 @@ We generated numerical representations of articles for similarity analysis:
 - Dimension: 768 dimensions per article
 - Purpose: Captures semantic similarity between articles
 
-### Graph Construction
+### Phase 3: Graph Construction
 
 We have constructed multiple graph representations to model information flow:
 
@@ -153,6 +149,54 @@ source .venv/bin/activate
 PYTHONPATH=. python scripts/run_eda.py
 ```
 
+### Running Link Analysis
+```bash
+source .venv/bin/activate
+PYTHONPATH=. python scripts/run_link_analysis.py
+```
+
+### Running Community Detection
+```bash
+source .venv/bin/activate
+PYTHONPATH=. python scripts/run_community_detection.py
+# For faster testing with large graphs:
+PYTHONPATH=. python scripts/run_community_detection.py --sample-size 100000
+```
+
+### Running Cascade Modeling
+```bash
+source .venv/bin/activate
+PYTHONPATH=. python scripts/run_cascade_modeling.py --max-articles 500
+```
+
+### Running Interactive Demo
+```bash
+source .venv/bin/activate
+python -m streamlit run scripts/demo_app.py
+```
+
+The app will open at `http://localhost:8501`
+
+## Interactive Demo
+
+We've created an interactive web application for real-time misinformation detection:
+
+**Features:**
+- **Text Input:** Paste any article or tweet text
+- **Similarity Matching:** Finds top 5 most similar articles from 23K+ dataset using TF-IDF cosine similarity
+- **Fake/Real Prediction:** Weighted voting based on similar articles' labels
+- **Confidence Scores:** Shows prediction confidence percentage
+- **Cascade Statistics:** Displays cascade trends and statistics in sidebar
+- **Similar Articles:** Shows matching articles with labels and similarity scores
+
+**Demo Screenshot:**
+*image.png*
+
+**Test Examples:**
+- Try exact matches from dataset: `Did Miley Cyrus and Liam Hemsworth secretly get married?` (should predict Fake)
+- Try new content not in dataset for similarity-based prediction
+- See sidebar for real-time cascade statistics
+
 ## Results Summary
 
 ### Dataset Statistics
@@ -177,15 +221,156 @@ PYTHONPATH=. python scripts/run_eda.py
 
 Due to the large size of generated files (processed CSV files and graph files can exceed 1GB), these files are excluded from version control via `.gitignore`. However, all code, scripts, and intermediate outputs can be accessed through this repository. The scripts provided can regenerate all processed files from the raw data.
 
-## Next Steps
+## Phase 4: Network Analysis & Cascade Modeling
 
-The following tasks remain to be completed:
+### Link Analysis (PageRank & HITS)
 
-- **Link Analysis:** Implement PageRank and HITS algorithms on user interaction graph
-- **Community Detection:** Apply Louvain algorithm to identify communities
-- **Temporal Cascade Modeling:** Implement Independent Cascade Model (ICM) simulations
-- **Comparative Analysis:** Compare fake vs. real news network structures
-- **Final Report:** Compile comprehensive results and visualizations
+We implemented link analysis algorithms to identify influential users in the misinformation network:
+
+**PageRank Analysis:**
+- Computed PageRank scores for all users in the interaction graph
+- Identified top influencers based on network structure
+- Compared influence patterns between fake and real news subgraphs
+- Output: `data/processed/link_analysis/pagerank_top_influencers.csv`
+
+**HITS Algorithm:**
+- Computed Authority scores (users whose content is frequently shared)
+- Computed Hub scores (users who frequently share others' content)
+- Identified key sources and amplifiers of misinformation
+- Output: `data/processed/link_analysis/hits_top_authorities.csv`, `hits_top_hubs.csv`
+
+**Fake vs Real Comparison:**
+- Separate subgraphs for fake and real news articles
+- Comparative analysis of influence patterns
+- Output: `data/processed/link_analysis/fake_*` and `real_*` files
+
+**Run Link Analysis:**
+```bash
+source .venv/bin/activate
+PYTHONPATH=. python scripts/run_link_analysis.py
+```
+
+### Community Detection (Louvain Algorithm)
+
+We applied community detection to identify echo chambers and user clusters:
+
+**Implementation:**
+- Louvain algorithm for modularity maximization
+- Detected 77,263 communities in the user interaction graph
+- Modularity score: 0.999892 (indicating strong community structure)
+- Community statistics: size, density, average degree
+
+**Fake vs Real Comparison:**
+- Analyzed community structures in fake and real news subgraphs
+- Identified differences in clustering patterns
+- Output: `data/processed/community_detection/communities.csv`, `community_statistics.csv`
+
+**Run Community Detection:**
+```bash
+source .venv/bin/activate
+PYTHONPATH=. python scripts/run_community_detection.py
+```
+
+**Note:** For large graphs, use `--sample-size N` for faster processing (e.g., `--sample-size 100000`)
+
+### Cascade Modeling (Independent Cascade Model)
+
+We implemented temporal diffusion simulation using the Independent Cascade Model:
+
+**ICM Simulation:**
+- Simulates how information spreads through user networks
+- Activation probability: 0.1 (configurable)
+- Tracks cascade progression over time steps
+- Computes metrics: depth, width, spread rate
+
+**Cascade Metrics:**
+- **Cascade Size:** Total number of activated nodes
+- **Cascade Depth:** Maximum time steps reached
+- **Max Width:** Maximum nodes activated in a single time step
+- **Spread Rate:** Average nodes activated per time step
+
+**Fake vs Real Comparison:**
+- Fake news: Average cascade size ~150 nodes, spread rate ~124 nodes/step
+- Real news: Average cascade size ~141 nodes, spread rate ~95 nodes/step
+- Fake news shows higher spread rates and larger maximum cascades
+- Output: `data/processed/cascade_modeling/cascade_metrics.csv`, `cascade_comparison_fake_vs_real.csv`
+
+**Visualizations:**
+- Cascade size distribution (box plots)
+- Cascade depth comparison
+- Spread rate analysis
+- Max width comparison
+- Histograms and comparison charts
+- Output: `data/processed/cascade_modeling/figures/*.png`
+
+**Run Cascade Modeling:**
+```bash
+source .venv/bin/activate
+PYTHONPATH=. python scripts/run_cascade_modeling.py --max-articles 500
+```
+
+## Interactive Demo
+
+We've created an interactive web application for real-time misinformation detection:
+
+**Features:**
+- **Text Input:** Paste any article or tweet text
+- **Similarity Matching:** Finds top 5 most similar articles from 23K+ dataset
+- **Fake/Real Prediction:** Weighted voting based on similar articles
+- **Confidence Scores:** Shows prediction confidence percentage
+- **Cascade Statistics:** Displays cascade trends in sidebar
+- **Similar Articles:** Shows matching articles with labels and similarity scores
+
+**How to Run:**
+```bash
+source .venv/bin/activate
+python -m streamlit run scripts/demo_app.py
+```
+
+The app will open at `http://localhost:8501`
+
+**Demo Screenshot:**
+*image.png*
+
+**Test Examples:**
+- Try exact matches from dataset: `Did Miley Cyrus and Liam Hemsworth secretly get married?` (should predict Fake)
+- Try new content not in dataset for similarity-based prediction
+- See sidebar for real-time cascade statistics
+
+## Project Results Summary
+
+### Key Findings
+
+1. **Fake News Engagement:** Fake news articles show higher average engagement (132.8 vs 74.8 tweets per article)
+
+2. **Network Structure:**
+   - User interaction graph: 1.9M nodes, 3.6M edges
+   - 77,263 communities detected with high modularity (0.999892)
+   - Strong community structure indicates echo chambers
+
+3. **Cascade Patterns:**
+   - Fake news spreads faster (avg 124 nodes/step vs 95 for real)
+   - Fake news reaches larger maximum cascade sizes
+   - Both show shallow cascade depths (most < 1 time step)
+
+4. **Influence Detection:**
+   - PageRank and HITS identify distinct influencer patterns
+   - Fake news subgraphs show different hub/authority distributions
+   - Key amplifiers identified in both networks
+
+### Output Files
+
+**Graphs:**
+- `data/processed/graphs/user_interaction.graphml` (802 MB)
+- `data/processed/graphs/article_tweet_bipartite.graphml` (389 MB)
+- `data/processed/graphs/article_similarity.graphml` (19 MB)
+
+**Analysis Results:**
+- Link Analysis: `data/processed/link_analysis/*.csv`
+- Community Detection: `data/processed/community_detection/*.csv`
+- Cascade Modeling: `data/processed/cascade_modeling/*.csv` and `figures/*.png`
+
+**Note:** Large processed files are excluded from git via `.gitignore`. Regenerate using the provided scripts.
 
 ## Contributing Workflow
 
