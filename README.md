@@ -7,7 +7,7 @@ This repository hosts the Fact Checkers team project for modeling how misinforma
 - Reconstruct the interaction graph that underpins misinformation cascades.
 - Identify high-impact sources and amplifiers via link analysis (PageRank, HITS).
 - Detect community structure and compare echo chambers between fake and real narratives.
-- Model temporal diffusion dynamics with cascade metrics and Independent Cascade simulations.
+- Model temporal diffusion dynamics with cascade metrics using both Independent Cascade Model (ICM) and Linear Threshold Model (LT) for comparative analysis.
 - Produce quantitative summaries and visuals that contrast misinformation with factual spread patterns.
 
 ## Repository Layout
@@ -165,8 +165,12 @@ PYTHONPATH=. python scripts/run_community_detection.py --sample-size 100000
 
 ### Running Cascade Modeling
 ```bash
+# Run ICM only (default)
 source .venv/bin/activate
 PYTHONPATH=. python scripts/run_cascade_modeling.py --max-articles 500
+
+# Run both ICM and LT models with comparison
+PYTHONPATH=. python scripts/run_cascade_modeling.py --run-lt --compare-models --max-articles 500
 ```
 
 ### Running Interactive Demo
@@ -274,40 +278,55 @@ PYTHONPATH=. python scripts/run_community_detection.py
 
 **Note:** For large graphs, use `--sample-size N` for faster processing (e.g., `--sample-size 100000`)
 
-### Cascade Modeling (Independent Cascade Model)
+### Cascade Modeling (ICM & LT Models)
 
-We implemented temporal diffusion simulation using the Independent Cascade Model:
+We implemented temporal diffusion simulation using two complementary cascade models for comparative analysis:
 
-**ICM Simulation:**
-- Simulates how information spreads through user networks
-- Activation probability: 0.1 (configurable)
+**Independent Cascade Model (ICM):**
+- Probabilistic model: Each activation attempt succeeds with probability 0.1
+- Simulates random viral spread through user networks
 - Tracks cascade progression over time steps
-- Computes metrics: depth, width, spread rate
+- Output: `data/processed/cascade_modeling/cascade_metrics.csv`
 
-**Cascade Metrics:**
+**Linear Threshold Model (LT):**
+- Threshold-based model: Nodes activate when cumulative influence exceeds threshold
+- Simulates influence-based spread (deterministic once thresholds set)
+- Captures how users respond to collective influence
+- Output: `data/processed/cascade_modeling/cascade_metrics_lt.csv`
+
+**Cascade Metrics (Both Models):**
 - **Cascade Size:** Total number of activated nodes
 - **Cascade Depth:** Maximum time steps reached
 - **Max Width:** Maximum nodes activated in a single time step
 - **Spread Rate:** Average nodes activated per time step
 
-**Fake vs Real Comparison:**
-- Fake news: Average cascade size ~150 nodes, spread rate ~124 nodes/step
-- Real news: Average cascade size ~141 nodes, spread rate ~95 nodes/step
-- Fake news shows higher spread rates and larger maximum cascades
-- Output: `data/processed/cascade_modeling/cascade_metrics.csv`, `cascade_comparison_fake_vs_real.csv`
+**Fake vs Real Comparison (ICM Results):**
+- Fake news: Average cascade size ~169 nodes, spread rate ~113 nodes/step
+- Real news: Average cascade size ~75 nodes, spread rate ~75 nodes/step
+- Fake news shows 30% faster spread rates under ICM
+- Output: `data/processed/cascade_modeling/cascade_comparison_fake_vs_real.csv`
+
+**Model Comparison (ICM vs LT):**
+- ICM: Produces smaller, faster cascades; Fake news spreads faster (113 vs 75 nodes/step)
+- LT: Produces larger, deeper cascades; Real news spreads faster (84 vs 42 nodes/step)
+- Models produce different predictions, highlighting importance of model selection
+- Output: `data/processed/cascade_modeling/cascade_model_comparison.csv`
 
 **Visualizations:**
 - Cascade size distribution (box plots)
-- Cascade depth comparison
-- Spread rate analysis
-- Max width comparison
-- Histograms and comparison charts
+- Spread rate comparison
+- Cascade metrics comparison
+- Model comparison visualizations (ICM vs LT)
 - Output: `data/processed/cascade_modeling/figures/*.png`
 
 **Run Cascade Modeling:**
 ```bash
+# Run ICM only (default)
 source .venv/bin/activate
 PYTHONPATH=. python scripts/run_cascade_modeling.py --max-articles 500
+
+# Run both ICM and LT models
+PYTHONPATH=. python scripts/run_cascade_modeling.py --run-lt --compare-models --max-articles 500
 ```
 
 ## Interactive Demo
@@ -351,9 +370,10 @@ The app will open at `http://localhost:8501`
    - Strong community structure indicates echo chambers
 
 3. **Cascade Patterns:**
-   - Fake news spreads faster (avg 124 nodes/step vs 95 for real)
-   - Fake news reaches larger maximum cascade sizes
-   - Both show shallow cascade depths (most < 1 time step)
+   - **ICM Results:** Fake news spreads faster (avg 113 nodes/step vs 75 for real)
+   - **LT Results:** Real news spreads faster (avg 84 nodes/step vs 42 for fake)
+   - Model comparison reveals that diffusion patterns depend on underlying assumptions
+   - ICM produces smaller, faster cascades; LT produces larger, deeper cascades
 
 4. **Influence Detection:**
    - PageRank and HITS identify distinct influencer patterns
@@ -370,7 +390,12 @@ The app will open at `http://localhost:8501`
 **Analysis Results:**
 - Link Analysis: `data/processed/link_analysis/*.csv`
 - Community Detection: `data/processed/community_detection/*.csv`
-- Cascade Modeling: `data/processed/cascade_modeling/*.csv` and `figures/*.png`
+- Cascade Modeling: 
+  - ICM results: `data/processed/cascade_modeling/cascade_metrics.csv`
+  - LT results: `data/processed/cascade_modeling/cascade_metrics_lt.csv`
+  - Model comparison: `data/processed/cascade_modeling/cascade_model_comparison.csv`
+  - Fake vs Real comparison: `data/processed/cascade_modeling/cascade_comparison_fake_vs_real.csv`
+  - Visualizations: `data/processed/cascade_modeling/figures/*.png`
 
 **Note:** Large processed files are excluded from git via `.gitignore`. Regenerate using the provided scripts.
 
