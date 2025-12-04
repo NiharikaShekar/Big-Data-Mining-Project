@@ -16,7 +16,12 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.phase4.cascade_modeling import analyze_cascades, compare_fake_vs_real_cascades
+from src.phase4.cascade_modeling import (
+    analyze_cascades, 
+    analyze_cascades_lt,
+    compare_fake_vs_real_cascades,
+    compare_cascade_models
+)
 
 
 def main():
@@ -84,6 +89,16 @@ def main():
         action="store_true",
         help="Skip fake vs real comparison (faster)"
     )
+    parser.add_argument(
+        "--run-lt",
+        action="store_true",
+        help="Also run Linear Threshold (LT) model for comparison"
+    )
+    parser.add_argument(
+        "--compare-models",
+        action="store_true",
+        help="Compare ICM vs LT models (requires --run-lt)"
+    )
     
     args = parser.parse_args()
     
@@ -99,13 +114,52 @@ def main():
         random_state=args.random_state
     )
     
-    # Compare fake vs real
+    # Compare fake vs real for ICM
     if not args.no_comparison and len(results_df) > 0:
         cascade_metrics_path = args.output / "cascade_metrics.csv"
         compare_fake_vs_real_cascades(
             cascade_metrics_path=cascade_metrics_path,
             output_dir=args.output
         )
+    
+    # Run LT model if requested
+    if args.run_lt:
+        print("\n" + "="*60)
+        print("RUNNING LINEAR THRESHOLD (LT) MODEL")
+        print("="*60)
+        
+        lt_results_df = analyze_cascades_lt(
+            graph_path=args.graph,
+            user_tweet_map_path=args.user_tweet_map,
+            article_metrics_path=args.metrics,
+            output_dir=args.output,
+            threshold_distribution="uniform",
+            max_iterations=args.max_iterations,
+            max_articles=args.max_articles,
+            random_state=args.random_state
+        )
+        
+        # Compare fake vs real for LT
+        if not args.no_comparison and len(lt_results_df) > 0:
+            lt_metrics_path = args.output / "cascade_metrics_lt.csv"
+            compare_fake_vs_real_cascades(
+                cascade_metrics_path=lt_metrics_path,
+                output_dir=args.output / "lt_comparison"
+            )
+    
+    # Compare models if requested
+    if args.compare_models and args.run_lt:
+        icm_metrics_path = args.output / "cascade_metrics.csv"
+        lt_metrics_path = args.output / "cascade_metrics_lt.csv"
+        
+        if icm_metrics_path.exists() and lt_metrics_path.exists():
+            compare_cascade_models(
+                icm_metrics_path=icm_metrics_path,
+                lt_metrics_path=lt_metrics_path,
+                output_dir=args.output
+            )
+        else:
+            print("[WARNING] Cannot compare models - missing result files")
     
     print("\n[OK] Cascade modeling complete!")
 
